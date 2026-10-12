@@ -1,45 +1,25 @@
 import csv
 from operator import attrgetter
-class Strumento: #creo una nuova classe,strumento
-    def __init__(self,id_strumento,tipo,marca,anno_acquisto,valore):
-        self.id_strumento=id_strumento
-        self.tipo=tipo
-        self.marca=marca
-        self.anno_acquisto=anno_acquisto
-        self.valore=valore
-
-    def __str__(self): #funzione __str__ per poterlo stampare
-        return f"{self.id_strumento},{self.tipo},{self.marca},{self.anno_acquisto},{self.valore}"
-
-class Prestito: #creo la classe prestito per la quinta funzione
-    def __init__(self,id_prestito,data,id_strumento,cognome_allievo):
-        self.id_prestito=id_prestito
-        self.data=data
-        self.id_strumento=id_strumento
-        self.cognome_allievo=cognome_allievo
-
-    def __str__(self):
-        return f"{self.id_prestito}, {self.data}, {self.id_strumento}, {self.cognome_allievo}"
-
-
+from strumento import Strumento #importo le classi create dagli altri file per poter risolvere le richieste
+from prestito import Prestito #le creo in un altro file per poter lavorare su di esse piu liberamente
 
 class DepositoStrumenti:
     def __init__(self, nome, responsabile):
         """Inizializza gli attributi e le strutture dati"""
         self.nome=nome
-        self._responsabile=responsabile
+        self.__responsabile=responsabile
         self.strumenti=[] #creo una collezione di oggetti all'interno di una classe
         self.prestiti=[] #creo lista per iterare sui prestiti
 
     @property
     def responsabile(self):
-        return self._responsabile
+        return self.__responsabile
 
     @responsabile.setter
     def responsabile(self, nuovo_responsabile):
         if nuovo_responsabile.strip()=="": #mi assicuro che il nome del nuovo responsabile sia corretto
             raise ValueError("Responsabile incorretto")
-        self._responsabile=nuovo_responsabile
+        self.__responsabile=nuovo_responsabile
 
 
     def carica_file_strumenti(self, file_path):
@@ -70,7 +50,27 @@ class DepositoStrumenti:
 
     def nuovo_prestito(self, data, id_strumento, cognome_allievo):
         """Crea un nuovo prestito"""
-        id_prestito="P"+str(len(self.prestiti)+1) #numero i prestiti
+        #controllo che il prestito sia possibile
+        presente=False #variabile booleana
+        for strumento in self.strumenti:
+            if strumento.id_strumento==id_strumento: #se gli l'ID richiesto è presente nel file, continuo
+                presente=True
+
+        if presente==False: #altrimenti, sollevo un'eccezione
+            raise Exception ("Strumento non esistente")
+
+        for prestito in self.prestiti: #controllo che lo strumento sia disponibile
+            if prestito.id_strumento==id_strumento:
+                raise Exception ("Strumento richiesto già in prestito")
+
+        if self.prestiti:  # numero i prestiti
+            # ricavo i numeri degli ID di tutti i prestiti presenti nella lista
+            numeri = [int(prestito.id_prestito[1:]) for prestito in self.prestiti]
+            id_prestito = "P" + str(
+                max(numeri) + 1)  # trovo l'ID piu grande e aggiungo uno per assegnare l'ID al nuovo prestito
+        else:
+            id_prestito = "P1"  # altrimenti, se non ci sono ancora prestiti gli assegno P1
+
         prestito=Prestito(id_prestito,data,id_strumento,cognome_allievo) #creo l'oggetto prestito
         self.prestiti.append(prestito) #lo aggiungo alla lista dei prestiti
         return prestito
